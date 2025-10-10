@@ -1,0 +1,53 @@
+# ------------------------
+# Python
+# ------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+.env
+
+# ------------------------
+# IDE / Editor
+# ------------------------
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ------------------------
+# Temporary files
+# ------------------------
+tmp/
+temp/
+*.tmp
+*.log
+
+# ------------------------
+# Backup files
+# ------------------------
+*.bak
+*.backup
+*~  # vim/sublime temp files
+
+# ------------------------
+# Database files
+# ------------------------
+*.db
+*.sqlite
+*.sqlite3
+
+# ------------------------
+# Docker
+# ------------------------
+*.env.*.local
+*.dockerignore
+docker-compose.override.yml
+
+# ------------------------
+# Other
+# ------------------------
+*.swp
+.DS_Store
