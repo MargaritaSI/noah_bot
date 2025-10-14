@@ -8,6 +8,7 @@ class BookingStates(StatesGroup):
     entering_name = State()
     entering_email = State()
     entering_phone = State()
+    entering_telegram = State()
 
 class SpecialBookingStates(StatesGroup):
     entering_name = State()

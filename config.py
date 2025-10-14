@@ -18,8 +18,8 @@ DISABLED_DATES = ["12-30", "12-31"]
 MENU_IMAGES = {
     "drinks": ["https://noah.restaurant/gallery_gen/1a289eb3de5be339938d7bc787125e05_fit.png?ts=1759702499"],
     "food": [
-        "https://noah.restaurant/gallery_gen/dfbf30aaeb714b24c7154b9b0e5cc94c_fit.png?ts=1759702499",
-        "https://noah.restaurant/gallery_gen/00fb7298434206f6c51ac398cec1fdf2_fit.png?ts=1759702499"
+        "https://noah.restaurant/gallery/page%20.png?ts=1760104319",
+        "https://noah.restaurant/gallery/page%202.png?ts=1760104319"
     ],
     "wine": ["https://noah.restaurant/gallery_gen/3fcbc262a17e81f9cf8cdb5fe858af7e_1190x1686_fit.png?ts=1759702500"]
 }

@@ -27,7 +27,7 @@ Telegram бот для ресторана Noah Lieven с функциями бр
 
 ```bash
 git clone <repository-url>
-cd noach
+cd noach_bot
 cp .env .env
 ```
 
@@ -135,14 +135,14 @@ noach/
 
 ```bash
 # Сборка образа
-docker build -t noach-bot .
+docker build -t noach_bot-bot .
 
 # Запуск контейнера
 docker run -d \
-  --name noach-bot \
+  --name noach_bot-bot \
   -p 8080:8080 \
   --env-file .env \
-  noach-bot
+  noach_bot-bot
 ```
 
 ### Docker Compose

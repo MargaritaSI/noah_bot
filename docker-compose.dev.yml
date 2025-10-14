@@ -2,23 +2,10 @@
 version: '3.8'
 
 services:
-  noach-bot-dev:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: noach-bot-dev
+  noach-bot:
+    build: .
+    container_name: noach_bot
     ports:
       - "8080:8080"
-    environment:
-      - BOT_TOKEN=${BOT_TOKEN}
-      - ADMIN_CHAT_ID=${ADMIN_CHAT_ID}
-      - WEBHOOK_URL=http://localhost:8080
-      - HOST=0.0.0.0
-      - PORT=8080
-    volumes:
-      - .:/app
-      - /app/venv  # Exclude venv from volume mount
     env_file:
       - .env
-    restart: unless-stopped
-    command: python main.py

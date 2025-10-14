@@ -274,6 +274,38 @@ async def enter_phone(message: Message, state: FSMContext):
         return
 
     await state.update_data(phone=phone)
+    await state.set_state(BookingStates.entering_telegram)
+
+    # Получаем username пользователя
+    user_telegram = message.from_user.username
+
+    if user_telegram:
+        # Если у пользователя есть username
+        await message.answer(
+            f"💬 Ваш Telegram: @{user_telegram}\n\n"
+            "Хотите оставить этот контакт для связи или указать другой?\n\n"
+            f"Отправьте '@{user_telegram}' или введите другой никнейм (например: @username):"
+        )
+    else:
+        # Если username нет
+        await message.answer(
+            "💬 Пожалуйста, введите ваш Telegram никнейм для связи (например: @username):\n\n"
+            "Или напишите 'нет', если не хотите оставлять Telegram."
+        )
+
+
+@dp.message(BookingStates.entering_telegram)
+async def enter_telegram(message: Message, state: FSMContext):
+    telegram_contact = message.text.strip()
+
+    # Если пользователь не хочет оставлять telegram
+    if telegram_contact.lower() in ['нет', 'no', '-']:
+        telegram_contact = "Не указан"
+    # Добавляем @ если забыли
+    elif telegram_contact and not telegram_contact.startswith('@'):
+        telegram_contact = f"@{telegram_contact}"
+
+    await state.update_data(telegram=telegram_contact)
 
     # Получаем все данные
     data = await state.get_data()
@@ -289,6 +321,14 @@ async def enter_phone(message: Message, state: FSMContext):
     await message.answer(user_message, reply_markup=main_menu_kb)
 
     # Отправляем данные админу
+    user_id = message.from_user.id
+    user_username = message.from_user.username
+    user_link = f"<a href='tg://user?id={user_id}'>Написать пользователю</a>"
+
+    telegram_display = data.get('telegram', 'Не указан')
+    if telegram_display != "Не указан" and telegram_display.startswith('@'):
+        telegram_display = f"<a href='https://t.me/{telegram_display[1:]}'>{telegram_display}</a>"
+
     admin_message = (
         "🔔 <b>НОВОЕ БРОНИРОВАНИЕ!</b>\n\n"
         f"📅 Дата: {data['date'].strftime('%d.%m.%Y')}\n"
@@ -296,9 +336,13 @@ async def enter_phone(message: Message, state: FSMContext):
         f"👥 Гостей: {data['people']}\n\n"
         f"👤 Имя: {data['name']}\n"
         f"📧 Email: {data['email']}\n"
-        f"📱 Телефон: {data['phone']}\n\n"
-        f"ID пользователя: {message.from_user.id}"
+        f"📱 Телефон: {data['phone']}\n"
+        f"💬 Telegram: {telegram_display}\n\n"
+        f"🔗 {user_link}\n"
+        f"User ID: <code>{user_id}</code>"
     )
+    if user_username:
+        admin_message += f"\nUsername: @{user_username}"
 
     try:
         await bot.send_message(ADMIN_ID, admin_message)
