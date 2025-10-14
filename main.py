@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from config import BOT_TOKEN, ADMIN_ID, DEFAULT_PROPERTIES, MENU_IMAGES, DELIVERY_URL, WELCOME_IMAGE, SPECIAL_IMAGE
-from keyboards import main_menu_kb, calendar_kb, people_kb, time_kb, confirm_kb, menu_kb
+from keyboards import main_menu_kb, calendar_kb, people_kb, time_kb, confirm_kb, menu_kb, gender_kb
 from states import BookingStates, SpecialBookingStates
 
 # Настройка логирования
@@ -235,13 +235,34 @@ async def change_parameter(callback: CallbackQuery, state: FSMContext):
 # Подтверждение и запрос контактов
 @dp.callback_query(F.data == "confirm:booking", BookingStates.confirming)
 async def confirm_booking(callback: CallbackQuery, state: FSMContext):
-    await state.set_state(BookingStates.entering_name)
+    await state.set_state(BookingStates.entering_gender)
     await callback.message.edit_text(
         "✅ <b>Отлично! Осталось заполнить контактные данные.</b>\n\n"
-        "Пожалуйста, введите ваше имя:"
+        "Укажите ваш пол:",
+        reply_markup=gender_kb()
     )
     await callback.answer()
 
+
+@dp.callback_query(F.data.startswith("gender:"), BookingStates.entering_gender)
+async def gender_selected(callback: CallbackQuery, state: FSMContext):
+    gender_code = callback.data.split(":")[1]
+
+    if gender_code == "male":
+        gender = "Мужской"
+    elif gender_code == "female":
+        gender = "Женский"
+    else:
+        gender = "Другое"
+
+    await state.update_data(gender=gender)
+    await state.set_state(BookingStates.entering_name)
+
+    await callback.message.edit_text(
+        f"✅ Пол: {gender}\n\n"
+        "Пожалуйста, введите ваше имя:"
+    )
+    await callback.answer()
 
 @dp.message(BookingStates.entering_name)
 async def enter_name(message: Message, state: FSMContext):
@@ -283,8 +304,8 @@ async def enter_phone(message: Message, state: FSMContext):
         # Если у пользователя есть username
         await message.answer(
             f"💬 Ваш Telegram: @{user_telegram}\n\n"
-            "Телеграм контакт для подтверждения\n\n"
-            f"Укажите свой '@{user_telegram}' или другой в подобном формате, если не хотите оставлять Telegram для подтверждения - напишите 'нет':"
+            "Укажите контакт для подтверждения\n\n"
+            f"Свой телеграм '@{user_telegram}' или другой в подобном формате, если не хотите указывать Telegram - напишите 'нет':"
         )
     else:
         # Если username нет
@@ -316,7 +337,7 @@ async def enter_telegram(message: Message, state: FSMContext):
         f"📅 Дата: {data['date'].strftime('%d.%m.%Y')}\n"
         f"🕐 Время: {data['time']:02d}:00\n"
         f"👥 Гостей: {data['people']}\n\n"
-        "С вами свяжется администратор для подтверждения."
+        "С вами свяжется администратор."
     )
     await message.answer(user_message, reply_markup=main_menu_kb)
 
@@ -329,11 +350,15 @@ async def enter_telegram(message: Message, state: FSMContext):
     if telegram_display != "Не указан" and telegram_display.startswith('@'):
         telegram_display = f"<a href='https://t.me/{telegram_display[1:]}'>{telegram_display}</a>"
 
+    gender_emoji = {"Мужской": "👨", "Женский": "👩", "Другое": "🧑"}
+    gender_icon = gender_emoji.get(data.get('gender', 'Другое'), "🧑")
+
     admin_message = (
         "🔔 <b>НОВОЕ БРОНИРОВАНИЕ!</b>\n\n"
         f"📅 Дата: {data['date'].strftime('%d.%m.%Y')}\n"
         f"🕐 Время: {data['time']:02d}:00\n"
         f"👥 Гостей: {data['people']}\n\n"
+        f"{gender_icon} Пол: {data.get('gender', 'Не указан')}\n"
         f"👤 Имя: {data['name']}\n"
         f"📧 Email: {data['email']}\n"
         f"📱 Телефон: {data['phone']}\n"
@@ -362,7 +387,7 @@ async def special_booking_start(message: Message, state: FSMContext):
 
     text = (
         "🎉 <b>Особенное мероприятие?</b>\n\n"
-        "Для дня рождения, корпоративного ужина или группы — заполните форму:\n\n"
+        "Для дня рождения, корпоративного ужина или группы заполните поля:\n\n"
         "Пожалуйста, введите ваше имя:"
     )
 
@@ -403,6 +428,32 @@ async def special_enter_phone(message: Message, state: FSMContext):
         return
 
     await state.update_data(phone=phone)
+    await state.set_state(SpecialBookingStates.entering_telegram)
+
+    user_telegram = message.from_user.username
+
+    if user_telegram:
+        await message.answer(
+            f"💬 Телеграм контакт для подтверждения\n\n"
+            f"Укажите свой '@{user_telegram}' или другой в подобном формате, если не хотите оставлять Telegram - напишите 'нет':"
+        )
+    else:
+        await message.answer(
+            "💬 Телеграм контакт для подтверждения\n\n"
+            "Укажите свой Telegram (например: @username), если не хотите оставлять - напишите 'нет':"
+        )
+
+
+@dp.message(SpecialBookingStates.entering_telegram)
+async def special_enter_telegram(message: Message, state: FSMContext):
+    telegram_contact = message.text.strip()
+
+    if telegram_contact.lower() in ['нет', 'no', '-']:
+        telegram_contact = "Не указан"
+    elif telegram_contact and not telegram_contact.startswith('@'):
+        telegram_contact = f"@{telegram_contact}"
+
+    await state.update_data(telegram=telegram_contact)
     await state.set_state(SpecialBookingStates.entering_guests)
     await message.answer("👥 Укажите количество гостей:")
 
@@ -428,15 +479,28 @@ async def special_enter_info(message: Message, state: FSMContext):
     await message.answer(user_message, reply_markup=main_menu_kb)
 
     # Отправка админу
+    # Отправка админу
+    user_id = message.from_user.id
+    user_username = message.from_user.username
+    user_link = f"<a href='tg://user?id={user_id}'>Написать пользователю</a>"
+
+    telegram_display = data.get('telegram', 'Не указан')
+    if telegram_display != "Не указан" and telegram_display.startswith('@'):
+        telegram_display = f"<a href='https://t.me/{telegram_display[1:]}'>{telegram_display}</a>"
+
     admin_message = (
         "🎉 <b>ЗАПРОС НА ОСОБЕННОЕ МЕРОПРИЯТИЕ!</b>\n\n"
         f"👤 Имя: {data['name']}\n"
         f"📧 Email: {data['email']}\n"
         f"📱 Телефон: {data['phone']}\n"
+        f"💬 Telegram: {telegram_display}\n"
         f"👥 Гостей: {data['guests']}\n\n"
         f"📝 Дополнительная информация:\n{data['info']}\n\n"
-        f"ID пользователя: {message.from_user.id}"
+        f"🔗 {user_link}\n"
+        f"User ID: <code>{user_id}</code>"
     )
+    if user_username:
+        admin_message += f"\nUsername: @{user_username}"
 
     try:
         await bot.send_message(ADMIN_ID, admin_message)

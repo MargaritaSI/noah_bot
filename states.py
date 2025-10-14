@@ -5,13 +5,17 @@ class BookingStates(StatesGroup):
     choosing_people = State()
     choosing_time = State()
     confirming = State()
+    entering_gender = State()
     entering_name = State()
+    entering_telegram = State()
     entering_email = State()
     entering_phone = State()
-    entering_telegram = State()
+
 
 class SpecialBookingStates(StatesGroup):
+    entering_gender = State()
     entering_name = State()
+    entering_telegram = State()
     entering_email = State()
     entering_phone = State()
     entering_guests = State()

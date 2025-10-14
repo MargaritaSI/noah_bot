@@ -176,3 +176,14 @@ def menu_kb():
         [InlineKeyboardButton(text="🍷 Винная карта", callback_data="menu:wine")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+# Выбор пола
+def gender_kb():
+    buttons = [
+        [
+            InlineKeyboardButton(text="👨 Мужской", callback_data="gender:male"),
+            InlineKeyboardButton(text="👩 Женский", callback_data="gender:female")
+        ],
+        [InlineKeyboardButton(text="🧑 Другое", callback_data="gender:other")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
