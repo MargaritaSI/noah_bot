@@ -4,13 +4,12 @@ on:
   push:
     branches:
       - main
-      - master
     tags:
       - 'v*'
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ghcr.io/margaritasi/noah_bot
 
 jobs:
   build-and-push:
@@ -30,17 +29,20 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: margaritasi
+          username: ${{ github.actor }}
           password: ${{ secrets.GHCR_PAT }}
 
+      - name: Clear buildx cache
+        run: docker builder prune -af
 
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
+            type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
@@ -50,3 +52,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+
+
